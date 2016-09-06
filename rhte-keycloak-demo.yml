@@ -111,13 +111,14 @@
       client_id: section-6
     register: client_out
 
-  - name: Ensure role exists
-    keycloak_role:
+  - name: Ensure client role exists
+    keycloak_client_role:
       server: "{{ keycloak_server }}"
       bearer_token: "{{ jwt.access_token }}"
       timeout: "{{ keycloak_api_timeout }}"
       validate_certs: "{{ keycloak_api_validate_certs }}"
       state: present
+      name: santaslittlehelper
       realm: "{{ realm_name }}"
       client_ident: "{{ client_out.client_ident }}"
 
