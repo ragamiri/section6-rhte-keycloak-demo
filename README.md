@@ -16,5 +16,5 @@ To run the ansible playbook:
       -e aws_access_key="xyz" -e aws_secret_key="abc"
 
 You may need to:
-    `sudo setenforce 0`
-    `source ~/git/ansible/hacking/env-setup`
+     sudo setenforce 0
+     source ~/git/ansible/hacking/env-setup
