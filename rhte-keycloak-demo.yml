@@ -1,0 +1,122 @@
+---
+- name: Configure Keycloak IAM server
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+   tmp_dir: /tmp
+   keycloak_server: http://localhost:8080
+   keycloak_username: adminuser
+   keycloak_password: Green1234#
+   keycloak_api_timeout: 10
+   keycloak_api_validate_certs: false
+   keystore_password: P@sswordA#
+   client_id: rhte-keycloak-demo
+   s3_bucket: s6-keycloak-demo
+
+  tasks:
+
+  - name: Check we were passed aws_access_key
+    fail: msg="Please pass a aws_access_key using -e"
+    when: aws_access_key is not defined
+
+  - name: Check we were passed aws_secret_key
+    fail: msg="Please specify a aws_secret_key using -e"
+    when: aws_secret_key is not defined
+
+  - name: create tmp_dir/demo
+    file:
+      path: "{{ tmp_dir }}/demo"
+      state: directory
+      mode: "u=rwx,go=rx"
+
+  - name: Get access token from Keycloak IAM server
+    keycloak_access_token:
+      username: "{{ keycloak_username }}"
+      password: "{{ keycloak_password }}"
+      server: "{{ keycloak_server }}"
+    register: jwt
+
+  - name: check if private key exists
+    stat: 
+      path: "{{ tmp_dir }}/demo/demo-private-key"
+    register: stat_result
+    ignore_errors: True
+
+  - name: Get the realm private key from S3
+    s3: 
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      bucket: "{{ s3_bucket }}"
+      object: demo-private-key 
+      dest: "{{ tmp_dir }}/demo/demo-private-key" 
+      mode: get
+    when: stat_result.stat.exists == False
+
+  - name: Read private key into var
+    command: cat "{{ tmp_dir }}/demo/demo-private-key"
+    register: realm_private_key
+
+  - name: check if public key exists
+    stat: 
+      path: "{{ tmp_dir }}/demo/demo-public-key"
+    register: stat_result
+    ignore_errors: True
+
+  - name: Get the realm private key from S3
+    s3: 
+      aws_access_key: "{{ aws_access_key }}"
+      aws_secret_key: "{{ aws_secret_key }}"
+      bucket: "{{ s3_bucket }}" 
+      object: "demo-public-key"
+      dest: "{{ tmp_dir }}/demo/demo-public-key" 
+      mode: get
+    when: stat_result.stat.exists == False
+
+  - name: Read public key into var
+    command: cat "{{ tmp_dir }}/demo/demo-public-key"
+    register: realm_public_key
+
+  - name: Ensure Realm exists
+    keycloak_realm:
+      server: "{{ keycloak_server }}"
+      bearer_token: "{{ jwt.access_token }}"
+      timeout: "{{ keycloak_api_timeout }}"
+      validate_certs: "{{ keycloak_api_validate_certs }}"
+      state: present
+      realm: rhte-keycloak-demo-12345
+      display_name: RHTE SECTION6 Keycloak Demo
+      enabled: true
+      registration_email_as_username: true 
+      edit_username_allowed: true 
+      reset_password_allowed: true
+      remember_me: false 
+      verify_email: true
+      public_key: "{{ realm_public_key.stdout }}"
+      private_key: "{{ realm_private_key.stdout }}"
+      brute_force_protected: true
+    register: realm_out
+
+  - name: Ensure client exists
+    keycloak_client:
+      server: "{{ keycloak_server }}"
+      bearer_token: "{{ jwt.access_token }}"
+      timeout: "{{ keycloak_api_timeout }}"
+      validate_certs: "{{ keycloak_api_validate_certs }}"
+      state: present
+      realm: rhte-keycloak-demo-12345
+      client_name: section6 
+      client_id: section-6
+    register: client_out
+
+  - name: Ensure role exists
+    keycloak_role:
+      server: "{{ keycloak_server }}"
+      bearer_token: "{{ jwt.access_token }}"
+      timeout: "{{ keycloak_api_timeout }}"
+      validate_certs: "{{ keycloak_api_validate_certs }}"
+      state: present
+      realm: rhte-keycloak-demo-12345
+      client_ident: "{{ client_out.client_ident }}"
+    
