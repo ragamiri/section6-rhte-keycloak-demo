@@ -40,18 +40,18 @@
     register: jwt
 
   - name: check if private key exists
-    stat: 
+    stat:
       path: "{{ tmp_dir }}/demo/demo-private-key"
     register: stat_result
     ignore_errors: True
 
   - name: Get the realm private key from S3
-    s3: 
+    s3:
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
       bucket: "{{ s3_bucket }}"
-      object: demo-private-key 
-      dest: "{{ tmp_dir }}/demo/demo-private-key" 
+      object: demo-private-key
+      dest: "{{ tmp_dir }}/demo/demo-private-key"
       mode: get
     when: stat_result.stat.exists == False
 
@@ -60,18 +60,18 @@
     register: realm_private_key
 
   - name: check if public key exists
-    stat: 
+    stat:
       path: "{{ tmp_dir }}/demo/demo-public-key"
     register: stat_result
     ignore_errors: True
 
   - name: Get the realm private key from S3
-    s3: 
+    s3:
       aws_access_key: "{{ aws_access_key }}"
       aws_secret_key: "{{ aws_secret_key }}"
-      bucket: "{{ s3_bucket }}" 
+      bucket: "{{ s3_bucket }}"
       object: "demo-public-key"
-      dest: "{{ tmp_dir }}/demo/demo-public-key" 
+      dest: "{{ tmp_dir }}/demo/demo-public-key"
       mode: get
     when: stat_result.stat.exists == False
 
@@ -89,10 +89,10 @@
       realm: "{{ realm_name }}"
       display_name: RHTE SECTION6 Keycloak Demo
       enabled: true
-      registration_email_as_username: true 
-      edit_username_allowed: true 
+      registration_email_as_username: true
+      edit_username_allowed: true
       reset_password_allowed: true
-      remember_me: false 
+      remember_me: false
       verify_email: true
       public_key: "{{ realm_public_key.stdout }}"
       private_key: "{{ realm_private_key.stdout }}"
@@ -107,7 +107,7 @@
       validate_certs: "{{ keycloak_api_validate_certs }}"
       state: present
       realm: "{{ realm_name }}"
-      client_name: section6 
+      client_name: section6
       client_id: section-6
     register: client_out
 
@@ -120,4 +120,4 @@
       state: present
       realm: "{{ realm_name }}"
       client_ident: "{{ client_out.client_ident }}"
-    
+
