@@ -12,6 +12,7 @@
    keycloak_api_timeout: 10
    keycloak_api_validate_certs: false
    keystore_password: P@sswordA#
+   realm_name: rhte-keycloak-demo
    client_id: rhte-keycloak-demo
    s3_bucket: s6-keycloak-demo
 
@@ -85,7 +86,7 @@
       timeout: "{{ keycloak_api_timeout }}"
       validate_certs: "{{ keycloak_api_validate_certs }}"
       state: present
-      realm: rhte-keycloak-demo-12345
+      realm: "{{ realm_name }}"
       display_name: RHTE SECTION6 Keycloak Demo
       enabled: true
       registration_email_as_username: true 
@@ -105,7 +106,7 @@
       timeout: "{{ keycloak_api_timeout }}"
       validate_certs: "{{ keycloak_api_validate_certs }}"
       state: present
-      realm: rhte-keycloak-demo-12345
+      realm: "{{ realm_name }}"
       client_name: section6 
       client_id: section-6
     register: client_out
@@ -117,6 +118,6 @@
       timeout: "{{ keycloak_api_timeout }}"
       validate_certs: "{{ keycloak_api_validate_certs }}"
       state: present
-      realm: rhte-keycloak-demo-12345
+      realm: "{{ realm_name }}"
       client_ident: "{{ client_out.client_ident }}"
     
